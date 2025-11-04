@@ -210,6 +210,15 @@ const appReducer = (state, action) => {
         isAuthenticated: true, 
         currentUser: action.payload 
       }));
+      
+      // Notify service worker that user is authenticated
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'AUTHENTICATED',
+          user: action.payload
+        });
+      }
+      
       return {
         ...state,
         isAuthenticated: true,
@@ -219,6 +228,14 @@ const appReducer = (state, action) => {
     case ActionTypes.LOGOUT:
       // Clear auth from localStorage
       localStorage.removeItem('auth');
+      
+      // Notify service worker that user logged out
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'LOGGED_OUT'
+        });
+      }
+      
       return {
         ...state,
         isAuthenticated: false,
