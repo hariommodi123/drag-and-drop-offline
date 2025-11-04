@@ -18,6 +18,30 @@ if ('serviceWorker' in navigator) {
       .then((registration) => {
         console.log('Service Worker registered successfully:', registration.scope);
         
+        // Check if user is already authenticated and notify service worker
+        const savedAuth = localStorage.getItem('auth');
+        if (savedAuth) {
+          try {
+            const authData = JSON.parse(savedAuth);
+            if (authData.isAuthenticated && navigator.serviceWorker.controller) {
+              // Wait a bit for service worker to be ready
+              setTimeout(() => {
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'AUTHENTICATED',
+                  user: authData.currentUser
+                });
+                
+                // Request to cache app resources
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'CACHE_APP_RESOURCES'
+                });
+              }, 1000);
+            }
+          } catch (e) {
+            console.error('Error parsing auth data:', e);
+          }
+        }
+        
         // Check for updates periodically
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
