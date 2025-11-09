@@ -8,6 +8,9 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 const Layout = ({ children }) => {
   const { state } = useApp();
   const isSeller = Boolean(state.currentUser?.sellerId);
+  const planBootstrapState = state.planBootstrap || {};
+  const shouldShowPlanLoader = isSeller && planBootstrapState.isActive && !planBootstrapState.hasCompleted;
+  const [isPlanLoaderVisible, setIsPlanLoaderVisible] = useState(shouldShowPlanLoader);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const { prompt, isInstallable, isInstalled, install } = usePWAInstall();
@@ -18,6 +21,16 @@ const Layout = ({ children }) => {
     }
     return sessionStorage.getItem('pwa-install-dismissed') === 'true';
   });
+
+  useEffect(() => {
+    if (shouldShowPlanLoader) {
+      setIsPlanLoaderVisible(true);
+      return;
+    }
+    if (!isPlanLoaderVisible) return;
+    const timeout = setTimeout(() => setIsPlanLoaderVisible(false), 400);
+    return () => clearTimeout(timeout);
+  }, [shouldShowPlanLoader, isPlanLoaderVisible]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -112,15 +125,25 @@ const Layout = ({ children }) => {
       {/* Mobile Navigation */}
       <MobileNavigation />
 
-      {isSeller && !state.isPlanDetailsReady && (
-        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-lg transition-opacity duration-300">
-          <div className="animate-spin rounded-full h-16 w-16 border-[3px] border-white/30 border-t-white shadow-[0_0_35px_rgba(255,255,255,0.35)]" aria-hidden="true"></div>
-          <div className="mt-6 text-center space-y-2 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">Please wait</p>
-            <h2 className="text-2xl font-semibold">We are preparing your dashboard...</h2>
-            <p className="text-sm text-white/70 max-w-sm">
-              Fetching the latest plan details and unlocking your workspace.
-            </p>
+      {isPlanLoaderVisible && (
+        <div
+          className={`fixed inset-0 z-[70] flex flex-col items-center justify-center transition-opacity duration-500 ease-out ${
+            shouldShowPlanLoader ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="absolute inset-0 bg-slate-900/65 backdrop-blur-xl" aria-hidden="true"></div>
+          <div className="relative flex flex-col items-center justify-center gap-6 rounded-3xl border border-white/10 bg-white/10 px-10 py-12 shadow-[0_35px_90px_-25px_rgba(15,23,42,0.65)] backdrop-blur-2xl">
+            <div className="relative flex h-20 w-20 items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-white/10 blur-xl"></div>
+              <div className="h-16 w-16 animate-spin rounded-full border-[3px] border-white/25 border-t-white"></div>
+            </div>
+            <div className="space-y-2 text-center text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">Please wait</p>
+              <h2 className="text-2xl font-semibold">We are preparing your dashboard...</h2>
+              <p className="text-sm text-white/70 max-w-sm">
+                Fetching the latest plan details and unlocking your workspace.
+              </p>
+            </div>
           </div>
         </div>
       )}
