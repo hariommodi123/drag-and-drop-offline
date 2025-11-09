@@ -1,0 +1,420 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Standard UI Styles */
+:root {
+    --color-primary: #000000; /* Black */
+    --color-secondary: #FFFFFF; /* White */
+    --color-accent: #007BFF; /* Royal Blue */
+}
+
+body {
+    background: var(--color-secondary);
+    color: var(--color-primary);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Better font rendering */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Standard Professional Cards */
+.card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+}
+
+/* Standard Professional Buttons */
+.btn-primary {
+    @apply bg-black hover:bg-black/90 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200;
+}
+
+.btn-danger {
+    @apply bg-rose-600 hover:bg-rose-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+}
+
+/* Standard Navigation */
+.nav-link {
+    @apply flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors duration-200;
+}
+
+.nav-link.active {
+    @apply text-white bg-black;
+}
+
+/* Standard Input Fields */
+.input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black;
+}
+
+.input-field.pl-10 {
+    padding-left: 2.5rem;
+}
+
+/* Professional Sidebar */
+.dark-sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+}
+
+.dark-sidebar .nav-link {
+    color: #374151;
+    margin: 4px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.dark-sidebar .nav-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.dark-sidebar .nav-link.active {
+    background: var(--color-accent);
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Professional Header */
+.professional-header {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Standard Stats Cards */
+.stat-card {
+    @apply bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden;
+    min-height: 140px;
+    max-width: 100%;
+    width: 100%;
+    word-wrap: break-word;
+    word-break: break-all;
+    padding: 20px;
+}
+
+.stat-card p {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Floating Animation */
+@keyframes float-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-float-up {
+    animation: float-up 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Slide-in animation */
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-in-left {
+    animation: slide-in-left 0.5s ease-out forwards;
+}
+
+/* Fade-in animation */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Floating box animations */
+@keyframes float-box-1 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(10px, -15px) rotate(180deg); }
+}
+
+@keyframes float-box-2 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-15px, 10px) rotate(-180deg); }
+}
+
+@keyframes float-box-3 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(15px, 10px) rotate(90deg); }
+}
+
+@keyframes float-box-4 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-10px, -10px) rotate(-90deg); }
+}
+
+@keyframes float-box-5 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(8px, 15px) rotate(45deg); }
+}
+
+@keyframes float-box-6 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-8px, -8px) rotate(-45deg); }
+}
+
+.floating-animation-1 {
+    animation: float-box-1 8s ease-in-out infinite;
+}
+
+.floating-animation-2 {
+    animation: float-box-2 6s ease-in-out infinite;
+}
+
+.floating-animation-3 {
+    animation: float-box-3 10s ease-in-out infinite;
+}
+
+.floating-animation-4 {
+    animation: float-box-4 7s ease-in-out infinite;
+}
+
+.floating-animation-5 {
+    animation: float-box-5 9s ease-in-out infinite;
+}
+
+.floating-animation-6 {
+    animation: float-box-6 5s ease-in-out infinite;
+}
+
+/* Professional Table */
+.professional-table {
+    @apply w-full divide-y divide-gray-200;
+}
+
+.professional-table thead {
+    @apply bg-gray-50;
+}
+
+.professional-table th {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.professional-table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+.professional-table tbody tr {
+    @apply hover:bg-gray-50;
+}
+
+/* Professional Modal */
+.professional-modal {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+}
+
+.professional-modal-content {
+    @apply bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto;
+}
+
+/* Professional Badge */
+.badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-danger {
+    @apply bg-red-100 text-red-800;
+}
+
+.badge-info {
+    @apply bg-blue-100 text-blue-800;
+}
+
+/* Hide scrollbar globally */
+html, body, * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari, Edge) */
+    width: 0;
+    height: 0;
+}
+
+/* Hide scrollbar for specific class */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Scanner Styles */
+.scanner-container {
+    @apply w-full h-64 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center;
+}
+
+/* Responsive Design */
+@media (min-width: 300px) and (max-width: 600px) {
+    .mobile-view {
+        @apply block;
+    }
+    .desktop-view {
+        @apply hidden;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 1024px) {
+    .tablet-view {
+        @apply block;
+    }
+    .mobile-view {
+        @apply hidden;
+    }
+}
+
+@media (min-width: 1025px) {
+    .desktop-view {
+        @apply block;
+    }
+    .tablet-view {
+        @apply hidden;
+    }
+}
+
+/* Dashboard Animations */
+.animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.5), 0 0 40px rgba(20, 184, 166, 0.3);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slideInRight {
+    animation: slideInRight 0.8s ease-out 0.2s both;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes loginFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loginFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes loginGlow {
+    0% {
+        opacity: 0.55;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.85;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+}
+
+.login-fade-up {
+    opacity: 0;
+    animation: loginFadeUp 0.8s ease-out forwards;
+}
+
+.login-delay-1 { animation-delay: 0.1s; }
+.login-delay-2 { animation-delay: 0.2s; }
+.login-delay-3 { animation-delay: 0.3s; }
+.login-delay-4 { animation-delay: 0.4s; }
+.login-delay-5 { animation-delay: 0.5s; }
+.login-delay-6 { animation-delay: 0.6s; }
+.login-delay-7 { animation-delay: 0.7s; }
+.login-delay-8 { animation-delay: 0.8s; }
+.login-delay-9 { animation-delay: 0.9s; }
+
+.login-float {
+    animation: loginFloat 8s ease-in-out infinite;
+}
+
+.login-glow {
+    animation: loginGlow 18s ease-in-out infinite;
+}
