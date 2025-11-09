@@ -7,6 +7,7 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 const Layout = ({ children }) => {
   const { state } = useApp();
+  const isSeller = Boolean(state.currentUser?.sellerId);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const { prompt, isInstallable, isInstalled, install } = usePWAInstall();
@@ -110,6 +111,19 @@ const Layout = ({ children }) => {
 
       {/* Mobile Navigation */}
       <MobileNavigation />
+
+      {isSeller && !state.isPlanDetailsReady && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-lg transition-opacity duration-300">
+          <div className="animate-spin rounded-full h-16 w-16 border-[3px] border-white/30 border-t-white shadow-[0_0_35px_rgba(255,255,255,0.35)]" aria-hidden="true"></div>
+          <div className="mt-6 text-center space-y-2 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">Please wait</p>
+            <h2 className="text-2xl font-semibold">We are preparing your dashboard...</h2>
+            <p className="text-sm text-white/70 max-w-sm">
+              Fetching the latest plan details and unlocking your workspace.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notifications */}
       <div className="fixed top-20 right-4 z-50 flex flex-col-reverse">
