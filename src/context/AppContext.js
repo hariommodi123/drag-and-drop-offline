@@ -53,6 +53,8 @@ const postMessageToServiceWorker = (message, options = {}) => {
   }
 };
 
+export const PLAN_LOADER_SESSION_KEY = 'plan-bootstrap-complete';
+
 // Export function to check if an order is currently being processed
 export const isOrderBeingProcessed = (order) => {
   if (!order) return false;
@@ -204,6 +206,8 @@ const getInitialState = () => {
     upiId: ''
   };
   
+  const hasPlanBootstrapCompleted = typeof window !== 'undefined' && sessionStorage.getItem(PLAN_LOADER_SESSION_KEY) === 'true';
+  
   if (savedSettings) {
     try {
       const parsed = JSON.parse(savedSettings);
@@ -256,7 +260,6 @@ const getInitialState = () => {
     isSubscriptionActive: settingsState.isSubscriptionActive,
     currentPlan: settingsState.currentPlan,
     currentPlanDetails: null, // Will be fetched from backend
-    isPlanDetailsReady: true,
     
     // Business details
     gstNumber: settingsState.gstNumber,
@@ -281,7 +284,14 @@ const getInitialState = () => {
     
     // Time and status
     currentTime: new Date().toLocaleTimeString(),
-    systemStatus: 'online'
+    systemStatus: 'online',
+    
+    planBootstrap: {
+      isActive: false,
+      hasCompleted: hasPlanBootstrapCompleted,
+      startedAt: null,
+      completedAt: hasPlanBootstrapCompleted ? Date.now() : null
+    },
   };
 };
 
@@ -715,6 +725,9 @@ export const ActionTypes = {
   // Subscription
   SET_SUBSCRIPTION_DAYS: 'SET_SUBSCRIPTION_DAYS',
   SET_SUBSCRIPTION_ACTIVE: 'SET_SUBSCRIPTION_ACTIVE',
+  PLAN_BOOTSTRAP_START: 'PLAN_BOOTSTRAP_START',
+  PLAN_BOOTSTRAP_COMPLETE: 'PLAN_BOOTSTRAP_COMPLETE',
+  PLAN_BOOTSTRAP_RESET: 'PLAN_BOOTSTRAP_RESET',
   
   // Business details
   SET_GST_NUMBER: 'SET_GST_NUMBER',
@@ -724,7 +737,6 @@ export const ActionTypes = {
   UPDATE_USER: 'UPDATE_USER',
   SET_VOICE_ASSISTANT_LANGUAGE: 'SET_VOICE_ASSISTANT_LANGUAGE',
   SET_VOICE_ASSISTANT_ENABLED: 'SET_VOICE_ASSISTANT_ENABLED',
-  SET_PLAN_DETAILS_READY: 'SET_PLAN_DETAILS_READY',
   
   // Scanner
   SET_SCANNER_ACTIVE: 'SET_SCANNER_ACTIVE',
@@ -812,11 +824,41 @@ const appReducer = (state, action) => {
         }
       }, 2000);
       
+      let nextPlanBootstrap = state.planBootstrap || {
+        isActive: false,
+        hasCompleted: false,
+        startedAt: null,
+        completedAt: null
+      };
+
+      if (action.payload?.sellerId) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem(PLAN_LOADER_SESSION_KEY);
+        }
+        nextPlanBootstrap = {
+          isActive: true,
+          hasCompleted: false,
+          startedAt: Date.now(),
+          completedAt: null
+        };
+      } else {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(PLAN_LOADER_SESSION_KEY, 'true');
+        }
+        nextPlanBootstrap = {
+          isActive: false,
+          hasCompleted: true,
+          startedAt: null,
+          completedAt: Date.now()
+        };
+      }
+      
       return {
         ...state,
         isAuthenticated: true,
         currentUser: action.payload,
-        upiId: action.payload?.upiId || ''
+        upiId: action.payload?.upiId || '',
+        planBootstrap: nextPlanBootstrap
       };
     }
       
@@ -830,11 +872,33 @@ const appReducer = (state, action) => {
       // Notify service worker that user logged out
       postMessageToServiceWorker({ type: 'LOGGED_OUT' });
       
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(PLAN_LOADER_SESSION_KEY);
+      }
+      
       return {
         ...state,
         isAuthenticated: false,
         currentUser: null,
-        upiId: ''
+        customers: [],
+        products: [],
+        transactions: [],
+        purchaseOrders: [],
+        activities: [],
+        categories: [],
+        currentPlan: 'basic',
+        currentPlanDetails: null,
+        isSubscriptionActive: true,
+        lowStockThreshold: 10,
+        expiryDaysThreshold: 3,
+        subscriptionDays: 30,
+        upiId: '',
+        planBootstrap: {
+          isActive: false,
+          hasCompleted: false,
+          startedAt: null,
+          completedAt: null
+        }
       };
       
     case ActionTypes.SET_LANGUAGE:
@@ -853,12 +917,6 @@ const appReducer = (state, action) => {
       return {
         ...state,
         currentPlanDetails: action.payload
-      };
-      
-    case ActionTypes.SET_PLAN_DETAILS_READY:
-      return {
-        ...state,
-        isPlanDetailsReady: Boolean(action.payload)
       };
       
     case ActionTypes.SET_VOICE_LANGUAGE:
@@ -2120,6 +2178,54 @@ const appReducer = (state, action) => {
         voiceAssistantEnabled: action.payload
       };
       
+    case ActionTypes.PLAN_BOOTSTRAP_START: {
+      if (state.planBootstrap?.isActive || state.planBootstrap?.hasCompleted) {
+        return state;
+      }
+      return {
+        ...state,
+        planBootstrap: {
+          isActive: true,
+          hasCompleted: false,
+          startedAt: Date.now(),
+          completedAt: null
+        }
+      };
+    }
+      
+    case ActionTypes.PLAN_BOOTSTRAP_COMPLETE: {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(PLAN_LOADER_SESSION_KEY, 'true');
+      }
+      if (state.planBootstrap?.hasCompleted && !state.planBootstrap?.isActive) {
+        return state;
+      }
+      return {
+        ...state,
+        planBootstrap: {
+          isActive: false,
+          hasCompleted: true,
+          startedAt: state.planBootstrap?.startedAt || null,
+          completedAt: Date.now()
+        }
+      };
+    }
+      
+    case ActionTypes.PLAN_BOOTSTRAP_RESET: {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(PLAN_LOADER_SESSION_KEY);
+      }
+      return {
+        ...state,
+        planBootstrap: {
+          isActive: false,
+          hasCompleted: false,
+          startedAt: null,
+          completedAt: null
+        }
+      };
+    }
+      
     default:
       if (action.type === 'ADD_ORDER' || action.type === 'FORCE_REFRESH') {
         // FORCE_REFRESH is expected to not have a case, but ADD_ORDER should have one
@@ -2234,12 +2340,6 @@ export const AppProvider = ({ children }) => {
   // Load data on mount - show IndexedDB first, then fetch from backend
   useEffect(() => {
     const loadData = async () => {
-      const sellerIdForMount = state.currentUser?.sellerId || null;
-      const trackPlanReady = Boolean(sellerIdForMount);
-      if (trackPlanReady) {
-        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: false });
-      }
-
       try {
         // Step 1: Load from IndexedDB FIRST (immediate display)
         const [
@@ -2304,9 +2404,6 @@ export const AppProvider = ({ children }) => {
             }
             if (typeof planRecord.data.isExpired === 'boolean') {
               dispatch({ type: ActionTypes.SET_SUBSCRIPTION_ACTIVE, payload: !planRecord.data.isExpired });
-            }
-            if (trackPlanReady) {
-              dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
             }
           }
           if (planRecord?.data) {
@@ -2433,33 +2530,15 @@ export const AppProvider = ({ children }) => {
     
     // Reload data when user changes - show IndexedDB first, then fetch from backend
     const loadUserData = async () => {
-      const sellerIdForUser = state.currentUser?.sellerId || null;
-      const trackPlanReady = Boolean(sellerIdForUser);
-      if (trackPlanReady) {
-        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: false });
-      } else {
-        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
-      }
-
       try {
         // Step 1: Load from IndexedDB FIRST (immediate display)
-        const [
-          indexedDBCustomers,
-          indexedDBProducts,
-          indexedDBOrders,
-          indexedDBTransactions,
-          indexedDBPurchaseOrders,
-          indexedDBCategories,
-          indexedDBPlanDetails,
-          activities
-        ] = await Promise.all([
+        const [indexedDBCustomers, indexedDBProducts, indexedDBOrders, indexedDBTransactions, indexedDBPurchaseOrders, indexedDBCategories, activities] = await Promise.all([
           getAllItems(STORES.customers).catch(() => []),
           getAllItems(STORES.products).catch(() => []),
           getAllItems(STORES.orders).catch(() => []),
           getAllItems(STORES.transactions).catch(() => []),
           getAllItems(STORES.purchaseOrders).catch(() => []),
           getAllItems(STORES.categories).catch(() => []),
-          getAllItems(STORES.planDetails).catch(() => []),
           getAllItems(STORES.activities).catch(() => [])
         ]);
 
@@ -2598,22 +2677,11 @@ export const AppProvider = ({ children }) => {
             if (combinedPlanDetails.planId) {
               dispatch({ type: ActionTypes.SET_CURRENT_PLAN, payload: combinedPlanDetails.planId });
             }
-            if (trackPlanReady) {
-              dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
-            }
-            lastSavedPlanDetailsRef.current = {
-              sellerId: sellerIdForUser,
-              hash: JSON.stringify(combinedPlanDetails)
-            };
           }
         }
       } catch (error) {
         console.error('Error loading user data:', error);
         dispatch({ type: ActionTypes.SET_SYSTEM_STATUS, payload: 'offline' });
-      } finally {
-        if (trackPlanReady) {
-          dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
-        }
       }
     };
     
@@ -2858,6 +2926,9 @@ export const AppProvider = ({ children }) => {
       lastSavedPlanDetailsRef.current.sellerId === sellerId &&
       lastSavedPlanDetailsRef.current.hash === dataHash
     ) {
+      if (state.planBootstrap?.isActive && !state.planBootstrap?.hasCompleted) {
+        dispatch({ type: ActionTypes.PLAN_BOOTSTRAP_COMPLETE });
+      }
       return;
     }
 
@@ -2871,19 +2942,25 @@ export const AppProvider = ({ children }) => {
     };
 
     (async () => {
+      let persisted = false;
       try {
         await updateInIndexedDB(STORES.planDetails, record);
+        persisted = true;
       } catch {
         try {
           await addToIndexedDB(STORES.planDetails, record);
+          persisted = true;
         } catch (error) {
           console.error('Error saving active plan details to IndexedDB:', error);
         }
       } finally {
         lastSavedPlanDetailsRef.current = { sellerId, hash: dataHash };
+        if (persisted && state.planBootstrap?.isActive) {
+          dispatch({ type: ActionTypes.PLAN_BOOTSTRAP_COMPLETE });
+        }
       }
     })();
-  }, [state.currentPlanDetails, state.currentUser?.sellerId]);
+  }, [state.currentPlanDetails, state.currentUser?.sellerId, state.planBootstrap?.isActive, dispatch]);
 
   // Save user-specific data when it changes - batched to reduce localStorage writes
   useEffect(() => {
