@@ -16,7 +16,7 @@
  */
 
 const DB_NAME = 'ERP_DB';
-const DB_VERSION = 13; // Incremented to add planDetails store for active plan caching
+const DB_VERSION = 14; // Incremented to ensure planDetails store is created across all environments
 
 // Object Store Names - ALL MongoDB models + frontend-only activities
 export const STORES = {
@@ -29,7 +29,7 @@ export const STORES = {
   plans: 'plans', // Premium plan details
   planOrders: 'planOrders', // Plan purchase orders
   planDetails: 'planDetails', // Cached active plan details per seller
-  activities: 'activities' // Frontend-only for UI logging
+  activities: 'activities',// Frontend-only for UI logging
 };
 
 // Database initialization
@@ -440,6 +440,8 @@ const openDB = () => {
             planOrderStore.createIndex('isSynced', 'isSynced', { unique: false });
           }
         }
+      }
+      
       if (!db.objectStoreNames.contains(STORES.planDetails)) {
         const planDetailStore = db.createObjectStore(STORES.planDetails, { keyPath: 'id', autoIncrement: false });
         planDetailStore.createIndex('sellerId', 'sellerId', { unique: false });
@@ -452,7 +454,6 @@ const openDB = () => {
         if (!planDetailStore.indexNames.contains('updatedAt')) {
           planDetailStore.createIndex('updatedAt', 'updatedAt', { unique: false });
         }
-      }
       }
       
       // Create Categories Store - EXACT MongoDB ProductCategory schema
