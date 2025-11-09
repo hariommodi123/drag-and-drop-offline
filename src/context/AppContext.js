@@ -256,6 +256,7 @@ const getInitialState = () => {
     isSubscriptionActive: settingsState.isSubscriptionActive,
     currentPlan: settingsState.currentPlan,
     currentPlanDetails: null, // Will be fetched from backend
+    isPlanDetailsReady: true,
     
     // Business details
     gstNumber: settingsState.gstNumber,
@@ -723,6 +724,7 @@ export const ActionTypes = {
   UPDATE_USER: 'UPDATE_USER',
   SET_VOICE_ASSISTANT_LANGUAGE: 'SET_VOICE_ASSISTANT_LANGUAGE',
   SET_VOICE_ASSISTANT_ENABLED: 'SET_VOICE_ASSISTANT_ENABLED',
+  SET_PLAN_DETAILS_READY: 'SET_PLAN_DETAILS_READY',
   
   // Scanner
   SET_SCANNER_ACTIVE: 'SET_SCANNER_ACTIVE',
@@ -851,6 +853,12 @@ const appReducer = (state, action) => {
       return {
         ...state,
         currentPlanDetails: action.payload
+      };
+      
+    case ActionTypes.SET_PLAN_DETAILS_READY:
+      return {
+        ...state,
+        isPlanDetailsReady: Boolean(action.payload)
       };
       
     case ActionTypes.SET_VOICE_LANGUAGE:
@@ -2226,6 +2234,12 @@ export const AppProvider = ({ children }) => {
   // Load data on mount - show IndexedDB first, then fetch from backend
   useEffect(() => {
     const loadData = async () => {
+      const sellerIdForMount = state.currentUser?.sellerId || null;
+      const trackPlanReady = Boolean(sellerIdForMount);
+      if (trackPlanReady) {
+        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: false });
+      }
+
       try {
         // Step 1: Load from IndexedDB FIRST (immediate display)
         const [
@@ -2290,6 +2304,9 @@ export const AppProvider = ({ children }) => {
             }
             if (typeof planRecord.data.isExpired === 'boolean') {
               dispatch({ type: ActionTypes.SET_SUBSCRIPTION_ACTIVE, payload: !planRecord.data.isExpired });
+            }
+            if (trackPlanReady) {
+              dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
             }
           }
           if (planRecord?.data) {
@@ -2416,15 +2433,33 @@ export const AppProvider = ({ children }) => {
     
     // Reload data when user changes - show IndexedDB first, then fetch from backend
     const loadUserData = async () => {
+      const sellerIdForUser = state.currentUser?.sellerId || null;
+      const trackPlanReady = Boolean(sellerIdForUser);
+      if (trackPlanReady) {
+        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: false });
+      } else {
+        dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
+      }
+
       try {
         // Step 1: Load from IndexedDB FIRST (immediate display)
-        const [indexedDBCustomers, indexedDBProducts, indexedDBOrders, indexedDBTransactions, indexedDBPurchaseOrders, indexedDBCategories, activities] = await Promise.all([
+        const [
+          indexedDBCustomers,
+          indexedDBProducts,
+          indexedDBOrders,
+          indexedDBTransactions,
+          indexedDBPurchaseOrders,
+          indexedDBCategories,
+          indexedDBPlanDetails,
+          activities
+        ] = await Promise.all([
           getAllItems(STORES.customers).catch(() => []),
           getAllItems(STORES.products).catch(() => []),
           getAllItems(STORES.orders).catch(() => []),
           getAllItems(STORES.transactions).catch(() => []),
           getAllItems(STORES.purchaseOrders).catch(() => []),
           getAllItems(STORES.categories).catch(() => []),
+          getAllItems(STORES.planDetails).catch(() => []),
           getAllItems(STORES.activities).catch(() => [])
         ]);
 
@@ -2563,11 +2598,22 @@ export const AppProvider = ({ children }) => {
             if (combinedPlanDetails.planId) {
               dispatch({ type: ActionTypes.SET_CURRENT_PLAN, payload: combinedPlanDetails.planId });
             }
+            if (trackPlanReady) {
+              dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
+            }
+            lastSavedPlanDetailsRef.current = {
+              sellerId: sellerIdForUser,
+              hash: JSON.stringify(combinedPlanDetails)
+            };
           }
         }
       } catch (error) {
         console.error('Error loading user data:', error);
         dispatch({ type: ActionTypes.SET_SYSTEM_STATUS, payload: 'offline' });
+      } finally {
+        if (trackPlanReady) {
+          dispatch({ type: ActionTypes.SET_PLAN_DETAILS_READY, payload: true });
+        }
       }
     };
     
